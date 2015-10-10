@@ -1,40 +1,48 @@
-#  Two-level software multi-bit trie implementation
+#  Two-level software multi-bit trie route lookup algorithm
 
 This work is based on the paper from Pankaj Gupta, Steven Lin, and Nick McKeown called "[Routing Lookups in Hardware at Memory Access Speeds](http://tiny-tera.stanford.edu/~nickm/papers/Infocom98_lookup.pdf)".
 
 ##### Compile using:
 
-make 
+`make `
 
 ##### Check it using:
 `valgrind --tool=memcheck --leak-check=yes ./route_lookup RIB prueba`
 
-## Description of the algorithm implemented.
+## Description of the implemented algorithm.
 
-This code is based on two main lists:
+####This code is based on two main lists:
 
-	mtable: Stores 2^24 interfaces each of them is sixteen bits long. The index of this table is made from the 24 MSB of and Ip Address. For example:
-			IP = 10.10.5.3 -> IF = 3
-		In the table could be :
-			mtable[657925] = 3
-		If the first bit of the interface is 1, then the interfca field is an index for a secondary table, which stores the special directions that are specified in the least significant bits.
+- **mtable:** Stores 2^24 interfaces each of them is sixteen bits long. The index of this table is made from the 24 MSB of and Ip Address. For example:
+ 
+		IP = 10.10.5.3 -> IF = 3
 
-	stable: Stores the networks whose netmask is higher than 24.
+In the table could be :
 
-There are basically two main methods which fill the two tables and perform the route lookup.
+		mtable[657925] = 3
+	
+If the first bit of the interface is 1, then the interfca field is an index for a secondary table, which stores the special directions that are specified in the least significant bits.
 
-	initializeFIB(): This is the most complex and large method of this code. It reads the route table file and, depending of the content of the line, make one thing or another.
+- **stable:** Stores the networks whose netmask is higher than 24.
 
-		* If the mask is less than 24: It stores the interface written in the file in the position defined by the last 24 bits of the IP.
+####  There are basically two main methods which fill the two tables and perform the route lookup.
 
-		* If the mask is equal or more than 24: It reads the memory stored in the main table. If it has a "1" in the "special bit" (indicating it's an index to the stable instead of an interface) the method goes to stable and writes the interface in the corresponding address inside the secondary table.
-		If it has not a "1" (meaning that is the first route entry that extends this this IP range more than 24 bits) it resizes the second table in order to store 256 new positions (corresponding to the last byte of an IP, 192.123.23.X ). After that, it copies the interface stored in the main table to the second table and after that it updates the information stored in the main table by writting a 1 in the 16th bit and the index to the stable entry in the rest of the bits.
+- **initializeFIB():**
 
-	interface_lookup(uint32_t *IP_lookup, short int *ntables,unsigned short *interface):
+This is the most complex and large method of this code. It reads the route table file and, depending of the content of the line, make one thing or another.
 
-		It looks for an IP inside the route lookup tables stored in RAM. To do that it uses the first 24 bits of the IP as an index to the main table.
-			If the 16th bit is 0 it means that the data of mtable is the interface. It returns the interface.
-			If the 16th bit is 1 it means that the data of mtable is the index to stable. It returns the content of stable.
+If the mask is less than 24: It stores the interface written in the file in the position defined by the last 24 bits of the IP.
+
+If the mask is equal or more than 24: It reads the memory stored in the main table. If it has a "1" in the "special bit" (indicating it's an index to the stable instead of an interface) the method goes to stable and writes the interface in the corresponding address inside the secondary table.
+
+If it has not a "1" (meaning that is the first route entry that extends this this IP range more than 24 bits) it resizes the second table in order to store 256 new positions (corresponding to the last byte of an IP, 192.123.23.X ). After that, it copies the interface stored in the main table to the second table and after that it updates the information stored in the main table by writting a 1 in the 16th bit and the index to the stable entry in the rest of the bits.
+
+- **interface_lookup(uint32_t *IP_lookup, short int *ntables,unsigned short *interface):**
+
+It looks for an IP inside the route lookup tables stored in RAM. To do that it uses the first 24 bits of the IP as an index to the main table.
+
+If the 16th bit is 0 it means that the data of mtable is the interface. It returns the interface.
+If the 16th bit is 1 it means that the data of mtable is the index to stable. It returns the content of stable.
 
 ## Under which circumstances your algorithm performs better than the linear search algorithm?
 
@@ -67,11 +75,11 @@ The Two-level software multi-bit trie that we implemented make 2 access to the m
 
 ## Argue if your algorithm is scalable for IPv6 (128 bit addresses, where 64 bits are the network prefix).
 
-	Although at first sight this algorithm seems to be scalable to IPv6 with just some minor changes in the code, it would be very difficult to scale it due to memory restrictions. Now we are using 35 Mbytes roughly speaking (our main table has 2^24 entries, each of them occupy 2 bytes, that is 33.5 Mbytes). With IpV6 the main table (which is not dynamically allocated) would occupy 2^96 x 2 bytes wich is 1.58x10^23 Mbytes).
+Although at first sight this algorithm seems to be scalable to IPv6 with just some minor changes in the code, it would be very difficult to scale it due to memory restrictions. Now we are using 35 Mbytes roughly speaking (our main table has 2^24 entries, each of them occupy 2 bytes, that is 33.5 Mbytes). With IpV6 the main table (which is not dynamically allocated) would occupy 2^96 x 2 bytes wich is 1.58x10^23 Mbytes).
 
-	Some improvement should be deployed in order to decrease the memory usage. Using an intermediate length table ,a multiple table scheme or a two-phase inter-node compression algorithm (as Michel Hanna, Sangyeun Cho, and Rami Melhem explain on its paper "A Novel Scalable IPv6 Lookup Scheme Using Compressed Pipelined Tries") would be necessary to adapt this algorithm to IPv6 in a real scenario.
+Some improvement should be deployed in order to decrease the memory usage. Using an intermediate length table ,a multiple table scheme or a two-phase inter-node compression algorithm (as Michel Hanna, Sangyeun Cho, and Rami Melhem explain on its paper "A Novel Scalable IPv6 Lookup Scheme Using Compressed Pipelined Tries") would be necessary to adapt this algorithm to IPv6 in a real scenario.
 
-	So the escalation of this algorithm, although it is possible, would imply some deep changes that will change substantially the structure of the code and would suppose to leave the main concept of the algorithm proposed by Gupta, which is the use of prefix expansion to simplify the ip-lookup process due to continued decreasing cost of DRAM memories.
+So the escalation of this algorithm, although it is possible, would imply some deep changes that will change substantially the structure of the code and would suppose to leave the main concept of the algorithm proposed by Gupta, which is the use of prefix expansion to simplify the ip-lookup process due to continued decreasing cost of DRAM memories.
 
 ## Bibliography
 
