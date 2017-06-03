@@ -11,17 +11,17 @@ This work is based on the paper from Pankaj Gupta, Steven Lin, and Nick McKeown 
 
 ## Description of the implemented algorithm.
 
-####This code is based on two main lists:
+The code is based on two main lists:
 
-- **mtable:** Stores 2^24 interfaces each of them is sixteen bits long. The index of this table is made from the 24 MSB of and Ip Address. For example:
+- **mtable:** Stores 2^24 interfaces each of them is sixteen bits long. The index of this table is made from the 24 MSB of and Ip Address. For instance, an entry like this:
  
 		IP = 10.10.5.3 -> IF = 3
 
-In the table could be :
+In the table would be stored like:
 
 		mtable[657925] = 3
 	
-If the first bit of the interface is 1, then the interfca field is an index for a secondary table, which stores the special directions that are specified in the least significant bits.
+If the first bit on the interface field is 1, it means it represents an index to a secondary table (`stable`) which stores the special networks (with higher masks) that are specified in the least significant bits. If not, it is just the interface ID.
 
 - **stable:** Stores the networks whose netmask is higher than 24.
 
@@ -31,11 +31,11 @@ If the first bit of the interface is 1, then the interfca field is an index for 
 
 This is the most complex and large method of this code. It reads the route table file and, depending of the content of the line, make one thing or another.
 
-If the mask is less than 24: It stores the interface written in the file in the position defined by the last 24 bits of the IP.
+**If the mask is less than 24:** It stores the interface written in the file in the position defined by the last 24 bits of the IP.
 
-If the mask is equal or more than 24: It reads the memory stored in the main table. If it has a "1" in the "special bit" (indicating it's an index to the stable instead of an interface) the method goes to stable and writes the interface in the corresponding address inside the secondary table.
+**If the mask is equal or more than 24:** It reads the memory stored in the main table. If it has a "1" in the "special bit" ,indicating it's an index to `stable` instead of an interface, the method goes to stable and writes the interface in the corresponding address inside the secondary table.
 
-If it has not a "1" (meaning that is the first route entry that extends this this IP range more than 24 bits) it resizes the second table in order to store 256 new positions (corresponding to the last byte of an IP, 192.123.23.X ). After that, it copies the interface stored in the main table to the second table and after that it updates the information stored in the main table by writting a 1 in the 16th bit and the index to the stable entry in the rest of the bits.
+If it has not a "1", meaning that is the first route entry that extends this this IP range more than 24 bits, it resizes the second table in order to store 256 new positions corresponding to the last byte of an IP, 192.123.23.X . After that, it copies the interface stored in the main table to the second table and after that it updates the information stored in the main table by writting a 1 in the 16th bit and the index to the stable entry in the rest of the bits.
 
 - **interface_lookup(uint32_t *IP_lookup, short int *ntables,unsigned short *interface):**
 
@@ -44,7 +44,7 @@ It looks for an IP inside the route lookup tables stored in RAM. To do that it u
 If the 16th bit is 0 it means that the data of mtable is the interface. It returns the interface.
 If the 16th bit is 1 it means that the data of mtable is the index to stable. It returns the content of stable.
 
-## Under which circumstances your algorithm performs better than the linear search algorithm?
+## Under which circumstances this algorithm performs better than the linear search algorithm?
 
 In any circumstance because linear Search is an algorithm that always make more than one access to DRAM in order to return an interface. Nevertheless our algorithm beats the Linear Search algorithm even more when the routing table is a complex one (as we can see in the second simulation performed on a Pentium M) because in these situations Linear Search has to perform more access to memory while our multibit-Trie algorithm continues performing the same table accesses (1-2)
 
@@ -73,7 +73,7 @@ The Two-level software multi-bit trie that we implemented make 2 access to the m
 | ts with p2  | 1.24     |  1.74   |
 | ts with p3  | 1.36     |  1.80   | Executed on a Debian 7.8 Pentium M @ 1400MHz
 
-## Argue if your algorithm is scalable for IPv6 (128 bit addresses, where 64 bits are the network prefix).
+## Argue if this algorithm is scalable for IPv6 (128 bit addresses, where 64 bits are the network prefix).
 
 Although at first sight this algorithm seems to be scalable to IPv6 with just some minor changes in the code, it would be very difficult to scale it due to memory restrictions. Now we are using 35 Mbytes roughly speaking (our main table has 2^24 entries, each of them occupy 2 bytes, that is 33.5 Mbytes). With IpV6 the main table (which is not dynamically allocated) would occupy 2^96 x 2 bytes wich is 1.58x10^23 Mbytes).
 
