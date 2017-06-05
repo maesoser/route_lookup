@@ -96,9 +96,7 @@ void initializeFIB()
 	error_code = readFIBLine(IP_addr, aux_prefixLength, aux_outInterface);        //Now we have the prefix, the ip and the interface
 
 	while(error_code == 0){  //WHILE NOT EOF OR ANOTHER TYPE OF ERROR
-
-		long int number_of_hosts = 0;		// We calculate the number of hosts affected by the mask
-
+		long int number_of_hosts = 0;	// We calculate the number of hosts affected by the mask
 		// 2 24 - PREFIJO
 		if(*aux_prefixLength <= 24){
 			number_of_hosts = pow(2,24 - *aux_prefixLength);
@@ -108,22 +106,21 @@ void initializeFIB()
 			}
 		}
 		else{
-
 			number_of_hosts = pow(2,32 - *aux_prefixLength);
-
 			if(mtable[*IP_addr>>8]>>15 == 0)
 			{
-				// 1. REALLOC MEMORY
-				stable = realloc(stable, 256*(extended_IPs + 1)*2);		// We reserve 256 more chunks for the new interfaces
-
+				// 1. REALLOC MEMORY, we reserve 256 more chunks for the new interfaces
+				stable = realloc(stable, 256*(extended_IPs + 1)*2);
 				// 2. COPY FROM MTABLE TO STABLE
-				for(ip_index = 0; ip_index <= 255; ip_index++) // recorremos todo el rango de IP's del ultimo byte de la IP, copiando lo anterior
+				// recorremos todo el rango de IP's del ultimo byte de la IP, copiando lo anterior
+				for(ip_index = 0; ip_index <= 255; ip_index++) 
 				{
 					stable[extended_IPs*256 + ip_index] = mtable[*IP_addr>>8];
 				}
 
 				// 3. UPDATE MTABLE VALUE WITH THE INDEX OF STABLE
-				mtable[*IP_addr>>8] = extended_IPs | 0x8000;		//we write the "index" to the address in the stable and the bit 1 in the 16th position (0b1000000000000000)
+				// We write the "index" to the address in the stable and the bit 1 in the 16th position (0b1000000000000000)
+				mtable[*IP_addr>>8] = extended_IPs | 0x8000;
 
 				// 4. POPULATE THE STABLE CHUNK WITH THE SPECIFIED NEW ADDRESS
 				for(ip_index = (*IP_addr & 0xFF); ip_index < number_of_hosts + (*IP_addr & 0xFF); ip_index++)
@@ -143,7 +140,8 @@ void initializeFIB()
 
 			}
 		}
-          error_code = readFIBLine(IP_addr,aux_prefixLength,aux_outInterface);        //Now we get another IP, interface and interface
+	  //Now we get another IP, interface and interface
+          error_code = readFIBLine(IP_addr,aux_prefixLength,aux_outInterface);        
 	}
 
 			free(IP_addr);
@@ -163,9 +161,7 @@ void initializeFIB()
  */
 void interface_lookup(uint32_t *IP_lookup, short int *ntables,unsigned short *interface)
 {
-
 	*interface = mtable[*IP_lookup>>8];
-
 	if(*interface>>15 == 0)
 	{
 		*ntables = 1;
@@ -175,7 +171,7 @@ void interface_lookup(uint32_t *IP_lookup, short int *ntables,unsigned short *in
 	{
 		*ntables = 2;
 		*interface = stable[(*interface & 0x7FFF)*256 + (*IP_lookup & 0x000000FF)];
-		// 0x7fff = 0b0111111111111111
+		// 0x7fff = 0b0111111111111111 to adquire just the address to the 2nd table
 		return;
 	}
 	return;
