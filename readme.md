@@ -75,7 +75,7 @@ The Two-level software multi-bit trie that we implemented make 2 access to the m
 
 ## Argue if this algorithm is scalable for IPv6 (128 bit addresses, where 64 bits are the network prefix).
 
-Although at first sight this algorithm seems to be scalable to IPv6 with just some minor changes in the code, it would be very difficult to scale it due to memory restrictions. Now we are using 35 Mbytes roughly speaking (our main table has 2^24 entries, each of them occupy 2 bytes, that is 33.5 Mbytes). With IpV6 the main table (which is not dynamically allocated) would occupy 2^96 x 2 bytes wich is 1.58x10^23 Mbytes).
+Although at first sight this algorithm seems to be scalable to IPv6 with just some minor changes in the code, it would be very difficult to scale it due to memory restrictions. Now we are using 35 Mbytes roughly speaking (our main table has 2^24 entries, each of them occupy 2 bytes, that is 33.5 Mbytes). With IpV6 the main table (which is not dynamically allocated) would occupy 2^64 x 2 bytes wich is 3.51x10^13 Mbytes, 35 Exabytes).
 
 Some improvement should be deployed in order to decrease the memory usage. Using an intermediate length table ,a multiple table scheme or a two-phase inter-node compression algorithm (as Michel Hanna, Sangyeun Cho, and Rami Melhem explain on its paper "[A Novel Scalable IPv6 Lookup Scheme Using Compressed Pipelined Tries](http://dl.acm.org/citation.cfm?id=2008820)") would be necessary to adapt this algorithm to IPv6 in a real scenario.
 
