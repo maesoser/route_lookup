@@ -79,6 +79,8 @@ Although at first sight this algorithm seems to be scalable to IPv6 with just so
 
 Some improvement should be deployed in order to decrease the memory usage. Using an intermediate length table ,a multiple table scheme or a two-phase inter-node compression algorithm (as Michel Hanna, Sangyeun Cho, and Rami Melhem explain on its paper "[A Novel Scalable IPv6 Lookup Scheme Using Compressed Pipelined Tries](http://dl.acm.org/citation.cfm?id=2008820)") would be necessary to adapt this algorithm to IPv6 in a real scenario.
 
+Another interesting research path could take us to explore space-efficient probabilistic data structures like [cuckoo](http://dl.acm.org/citation.cfm?id=2674994) or [bloom filters](http://dl.acm.org/citation.cfm?id=1080114).
+
 So the escalation of this algorithm, although it is possible, would imply some deep changes that will change substantially the structure of the code and would suppose to leave the main concept of the algorithm proposed by Gupta, which is the use of prefix expansion to simplify the ip-lookup process due to continued decreasing cost of DRAM memories.
 
 ## Bibliography
