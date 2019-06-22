@@ -7,6 +7,7 @@ This work is based on the paper from Pankaj Gupta, Steven Lin, and Nick McKeown 
 `make `
 
 ##### Check it using:
+
 `valgrind --tool=memcheck --leak-check=yes ./route_lookup RIB prueba`
 
 ## Description of the implemented algorithm.
@@ -14,35 +15,36 @@ This work is based on the paper from Pankaj Gupta, Steven Lin, and Nick McKeown 
 The code is based on two main lists:
 
 - **mtable:** Stores 2^24 interfaces each of them is sixteen bits long. The index of this table is made from the 24 MSB of and Ip Address. For instance, an entry like this:
- 
+
 		IP = 10.10.5.3 -> IF = 3
 
 In the table would be stored like:
 
 		mtable[657925] = 3
-	
+
 If the first bit on the interface field is 1, it means it represents an index to a secondary table (`stable`) which stores the special networks (with higher masks) that are specified in the least significant bits. If not, it is just the interface ID.
 
 - **stable:** Stores the networks whose netmask is higher than 24.
 
 ####  There are basically two main methods which fill the two tables and perform the route lookup.
 
-- `initializeFIB():`
+- `RIB_addRoute(RIB_t* rib, uint32_t *ipv4_addr, int *mask, int *out_iface);`
 
-This is the most complex and large method of this code. It reads the route table file and, depending of the content of the line, make one thing or another.
+This is the heart of this routing algorithm. Depending on the size of the mask, it does one thing or another:
 
-**If the mask is less than 24:** It stores the interface written in the file in the position defined by the last 24 bits of the IP.
+- **If the mask is less than 24:** It stores the interface written in the file in the position defined by the last 24 bits of the IP.
 
-**If the mask is equal or more than 24:** It reads the memory stored in the main table. If it has a 1 in the "special bit", indicating it's an index to `stable` instead of an interface, the method goes to stable and writes the interface in the corresponding address inside the secondary table.
+- **If the mask is equal or more than 24:** It reads the memory stored in the main table. If it has a 1 in the "special bit", indicating it's an index to `stable` instead of an interface, the method goes to stable and writes the interface in the corresponding address inside the secondary table.
 
 If it has not a 1, meaning that is the first route entry that extends this this IP range more than 24 bits, it resizes the second table in order to store 256 new positions corresponding to the last byte of an IP, 192.123.23.X . After that, it copies the interface stored in the main table to the second table and after that it updates the information stored in the main table by writting a 1 in the 16th bit and the index to the stable entry in the rest of the bits.
 
-- `interface_lookup(uint32_t *IP_lookup, short int *ntables,unsigned short *interface):`
+- `RIB_lookup(RIB_t* rib, uint32_t *IP_lookup, short int *ntables,unsigned short *interface);`
 
 It looks for an IP inside the route lookup tables stored in RAM. To do that it uses the first 24 bits of the IP as an index to the main table.
 
-If the 16th bit is 0 it means that the data of mtable is the interface. It returns the interface.
-If the 16th bit is 1 it means that the data of mtable is the index to stable. It returns the content of stable.
+- If the 16th bit is 0 it means that the data of mtable is the interface. It returns the interface.
+
+- If the 16th bit is 1 it means that the data of mtable is the index to stable. It returns the content of stable.
 
 ## Under which circumstances this algorithm performs better than the linear search algorithm?
 
@@ -75,7 +77,7 @@ The Two-level software multi-bit trie that we implemented make 2 access to the m
 
 ## Argue if this algorithm is scalable for IPv6 (128 bit addresses, where 64 bits are the network prefix).
 
-Although at first sight this algorithm seems to be scalable to IPv6 with just some minor changes in the code, it would be very difficult to scale it due to memory restrictions. Now we are using 35 Mbytes roughly speaking (our main table has 2^24 entries, each of them occupy 2 bytes, that is 33.5 Mbytes). With IpV6 the main table (which is not dynamically allocated) would occupy 2^64 x 2 bytes wich is 3.51x10^13 Mbytes, 35 Exabytes).
+Although at first sight this algorithm seems to be scalable to IPv6 with just some minor changes in the code, it would be very difficult to scale it due to memory restrictions. Now we are using 35 Mbytes roughly speaking (our main table has 2^24 entries, each of them occupy 2 bytes, that is 33.5 Mbytes). This size could be exponentially increased if we do not use compression techniques to address the peculiarities of IPv6.
 
 Some improvement should be deployed in order to decrease the memory usage. Using an intermediate length table ,a multiple table scheme or a two-phase inter-node compression algorithm (as Michel Hanna, Sangyeun Cho, and Rami Melhem explain on its paper "[A Novel Scalable IPv6 Lookup Scheme Using Compressed Pipelined Tries](http://dl.acm.org/citation.cfm?id=2008820)") would be necessary to adapt this algorithm to IPv6 in a real scenario.
 
@@ -85,20 +87,26 @@ So the escalation of this algorithm, although it is possible, would imply some d
 
 ## Bibliography
 
- * 	[Understanding IP Addresses and binary](http://www.watchguard.com/infocenter/editorial/135183.asp)
+### About IPv4 Networks
 
- * 	[C Pointers](http://www.eskimo.com/~scs/cclass/notes/sx10b.html)
+* 	[Understanding IP Addresses and binary](http://www.watchguard.com/infocenter/editorial/135183.asp)
 
- * 	[Bitwise Operators in C](http://www.cprogramming.com/tutorial/bitwise_operators.html)
-
- * 	[Valgrind User Manual](http://valgrind.org/docs/manual/manual.html)
+ *  [IPv4 route lookup on Linux](https://vincent.bernat.ch/en/blog/2017-ipv4-route-lookup-linux)
 
  * [Routing Lookups in Hardware at Memory Access Speeds](http://tiny-tera.stanford.edu/~nickm/papers/Infocom98_lookup.pdf)
 
- * [Wikipedia article for IPv6](http://es.wikipedia.org/wiki/IPv6)
+### About IPv6 Networks
 
- * [A Novel Scalable IPv6 Lookup Scheme Using Compressed Pipelined Tries](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.221.1109&rep=rep1&type=pdf)
+* [A Novel Scalable IPv6 Lookup Scheme Using Compressed Pipelined Tries](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.221.1109&rep=rep1&type=pdf)
 
- * [FlashTrie: Hash-based Prefix-Compressed Trie for IP Route Lookup Beyond 100Gbps](http://eeweb.poly.edu/chao/docs/public/fthpctirlb100g.pdf)
+* [FlashTrie: Hash-based Prefix-Compressed Trie for IP Route Lookup Beyond 100Gbps](http://eeweb.poly.edu/chao/docs/public/fthpctirlb100g.pdf)
 
- * [Projecting IPv6 Packet Forwarding Characteristics Under Internet-wide Deployment](http://conferences.sigcomm.org/sigcomm/2007/ipv6/1569042943.pdf)
+* [Projecting IPv6 Packet Forwarding Characteristics Under Internet-wide Deployment](http://conferences.sigcomm.org/sigcomm/2007/ipv6/1569042943.pdf)
+
+### About C Programming
+
+* 	[C Pointers](http://www.eskimo.com/~scs/cclass/notes/sx10b.html)
+
+* 	[Bitwise Operators in C](http://www.cprogramming.com/tutorial/bitwise_operators.html)
+
+* 	[Valgrind User Manual](http://valgrind.org/docs/manual/manual.html)

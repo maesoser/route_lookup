@@ -1,12 +1,12 @@
-SRC = my_route_lookup.c my_route_lookup.h io.c io.h
+SRC = rib.c rib.h io.c io.h main.c main.h
 CFLAGS = -Wall -O3 -std=c99
 
 all: routeLookup
 
-routeLookup: my_route_lookup.c my_route_lookup.h io.c io.h
-	gcc $(CFLAGS) $(SRC) -o my_route_lookup -lm
+routeLookup: rib.c rib.h io.c io.h main.c main.h 
+	gcc $(CFLAGS) $(SRC) -o rib_test -lm
 
 .PHONY: clean
 
 clean:
-	rm -f my_route_lookup
+	rm -f rib_test
