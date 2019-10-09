@@ -34,21 +34,25 @@ void RIB_addRoute(RIB_t* rib, uint32_t *ipv4_addr, int *mask, int *out_iface){
 			// 2. COPY FROM MTABLE TO STABLE
 			for(rib->ip_index = 0; rib->ip_index <= 255; rib->ip_index++)
 			{
-				rib->aux_table[rib->extended_pools*256 + rib->ip_index] = rib->main_table[*ipv4_addr>>8];
+			    rib->aux_table[rib->extended_pools*256 + rib->ip_index] = rib->main_table[*ipv4_addr>>8];
 			}
 			// 3. UPDATE MTABLE VALUE WITH THE INDEX OF STABLE
 			rib->main_table[*ipv4_addr>>8] = rib->extended_pools | 0b1000000000000000;
 			// 4. POPULATE THE STABLE CHUNK WITH THE SPECIFIED NEW ADDRESS
-			for(rib->ip_index = (*ipv4_addr & 0xFF); rib->ip_index < n_hosts + (*ipv4_addr & 0xFF); rib->ip_index++)
+			for(rib->ip_index = (*ipv4_addr & 0xFF); 
+			    rib->ip_index < n_hosts + (*ipv4_addr & 0xFF); 
+			    rib->ip_index++)
 			{
-				rib->aux_table[rib->extended_pools*256 + rib->ip_index] = *out_iface;
+			    rib->aux_table[rib->extended_pools*256 + rib->ip_index] = *out_iface;
 			}
 			rib->extended_pools++;
 		}
 		else{  // If it already exists a chunk for this Ip range inside stable
-			for(rib->ip_index = (*ipv4_addr & 0xFF); rib->ip_index < n_hosts + (*ipv4_addr & 0xFF); rib->ip_index++)
-			{
-				rib->aux_table[(rib->main_table[*ipv4_addr>>8] & 0x7FFF)*256 + rib->ip_index] = *out_iface;
+			for(rib->ip_index = (*ipv4_addr & 0xFF); 
+			    rib->ip_index < n_hosts + (*ipv4_addr & 0xFF); 
+			    rib->ip_index++
+			){
+			    rib->aux_table[(rib->main_table[*ipv4_addr>>8] & 0x7FFF)*256 + rib->ip_index] = *out_iface;
 			}
 		}
 	}
