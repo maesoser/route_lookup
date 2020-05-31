@@ -26,6 +26,31 @@ If the first bit on the interface field is 1, it means it represents an index to
 
 - **stable:** Stores the networks whose netmask is higher than 24.
 
+```
+   MTABLE
+                                           STABLE
++-------------+
+|10.10.10     +------->  IF: 12          +---------+
++-------------+                          | 1       |
+|34.3.21.4    +------->  IF: 235         +---------+
++-------------+                          | 2       |
+|127.2.43.4   +---------------------+    +---------+
++-------------+                     |    | 3       |
+|76.35.75.2   +------->  IF: 16     |    +---------+
++-------------+                     +--->+ 4       |
+     (...)                               +---------+
+                                            (...)
+                                         +---------+
+                                         | 252     |
+                                         +---------+
+                                         | 253     |
+                                         +---------+
+                                         | 254     |
+                                         +---------+
+                                         | 255     |
+                                         +---------+
+```
+
 ####  There are basically two main methods which fill the two tables and perform the route lookup.
 
 - `RIB_addRoute(RIB_t* rib, uint32_t *ipv4_addr, int *mask, int *out_iface);`
